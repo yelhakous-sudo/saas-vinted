@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VintedPro SaaS - Analyseur de Marge Intelligent</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="config.js"></script>
+</head>
+<body>
+    <div class="access-gate" id="accessGate">
+        <div class="access-card glass-panel">
+            <div class="access-logo">
+                <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                    <rect width="48" height="48" rx="14" fill="url(#lg1)"/>
+                    <path d="M13 34L24 10L35 34" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M17 26H31" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <h2 class="access-title">Vinted<span class="accent">Pro</span></h2>
+            <p class="access-desc">Analyseur de marge intelligent</p>
+            <div class="access-input-group">
+                <input type="password" class="access-input" id="accessCode" placeholder="Code d'accès" maxlength="20" autocomplete="off">
+                <button class="access-btn" id="accessBtn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+            </div>
+            <p class="access-error" id="accessError"></p>
+        </div>
+    </div>
+
+    <canvas id="bgCanvas"></canvas>
+
+    <nav class="navbar">
+        <div class="nav-brand">
+            <div class="logo">
+                <svg class="logo-svg" viewBox="0 0 166 38" fill="none">
+                    <defs>
+                        <linearGradient id="lg1" x1="0" y1="0" x2="38" y2="38">
+                            <stop offset="0%" stop-color="#6C5CE7"/>
+                            <stop offset="50%" stop-color="#A29BFE"/>
+                            <stop offset="100%" stop-color="#fd79a8"/>
+                        </linearGradient>
+                        <linearGradient id="lg2" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#6C5CE7"/>
+                            <stop offset="100%" stop-color="#A29BFE"/>
+                        </linearGradient>
+                    </defs>
+                    <rect x="0" y="0" width="38" height="38" rx="10" fill="url(#lg1)"/>
+                    <path d="M10 26L19 6L28 26" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M13 20H25" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+                    <circle cx="19" cy="19" r="2.5" fill="rgba(255,255,255,0.25)">
+                        <animate attributeName="r" values="2;3.5;2" dur="3s" repeatCount="indefinite"/>
+                    </circle>
+                    <text x="48" y="26" font-family="Inter" font-weight="800" font-size="20" fill="#e8e8f0">Vinted</text>
+                    <text x="108" y="26" font-family="Inter" font-weight="800" font-size="20" fill="url(#lg2)">Pro</text>
+                </svg>
+            </div>
+        </div>
+        <div class="nav-stats">
+            <div class="stat-badge pulse-badge" id="liveBadge">
+                <span class="live-dot"></span>
+                <span class="live-text">Live</span>
+            </div>
+            <div class="stat-badge glass-badge">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+                <span id="creditsDisplay">0</span> analyses
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-container">
+        <div class="hero">
+            <div class="hero-badge">
+                <span class="hero-badge-dot"></span>
+                Intelligence de marché en temps réel
+            </div>
+            <h1 class="hero-title">
+                Analyseur de Marge<br>
+                <span class="gradient-text">Vinted</span>
+            </h1>
+            <p class="hero-sub">Scanne, analyse et identifie les meilleures opportunités de revente avec une précision algorithmique</p>
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <span class="hero-stat-value" id="statsScanned">0</span>
+                    <span class="hero-stat-label">Articles analysés</span>
+                </div>
+                <div class="hero-stat-divider"></div>
+                <div class="hero-stat">
+                    <span class="hero-stat-value" id="statsDeals">0</span>
+                    <span class="hero-stat-label">Offres trouvées</span>
+                </div>
+                <div class="hero-stat-divider"></div>
+                <div class="hero-stat">
+                    <span class="hero-stat-value" id="statsMargin">0%</span>
+                    <span class="hero-stat-label">Marge moyenne</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard">
+            <div class="controls-panel glass-panel">
+                <div class="panel-header">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    <span>Paramètres d'analyse</span>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                        Catégorie
+                    </label>
+                    <div class="category-grid" id="categoryGrid">
+                        <button class="cat-btn" data-cat="tops"><span class="cat-icon">👕</span><span class="cat-label">Tops</span></button>
+                        <button class="cat-btn" data-cat="pantalons"><span class="cat-icon">👖</span><span class="cat-label">Pantalons</span></button>
+                        <button class="cat-btn" data-cat="vestes"><span class="cat-icon">🧥</span><span class="cat-label">Vestes</span></button>
+                        <button class="cat-btn active" data-cat="chaussures"><span class="cat-icon">👟</span><span class="cat-label">Chaussures</span></button>
+                        <button class="cat-btn" data-cat="sacs"><span class="cat-icon">👜</span><span class="cat-label">Sacs</span></button>
+                        <button class="cat-btn" data-cat="accessoires"><span class="cat-icon">⌚</span><span class="cat-label">Accessoires</span></button>
+                        <button class="cat-btn" data-cat="sport"><span class="cat-icon">🏃</span><span class="cat-label">Sport</span></button>
+                        <button class="cat-btn" data-cat="enfants"><span class="cat-icon">👶</span><span class="cat-label">Enfants</span></button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+                        Type d'article
+                    </label>
+                    <div class="select-wrapper">
+                        <select class="styled-select" id="subcategorySelect">
+                            <option value="">Tous les types</option>
+                        </select>
+                        <svg class="select-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2z"/><path d="M7 7h.01"/></svg>
+                        Marques
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="text" class="styled-input" id="brandInput" value="Nike,Adidas,Saucony,New Balance" spellcheck="false">
+                        <div class="input-suffix">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                        Fourchette de prix
+                    </label>
+                    <div class="range-header">
+                        <span class="range-values" id="priceRangeLabel">0 € — 200 €</span>
+                    </div>
+                    <div class="range-container">
+                        <input type="range" class="range-slider" id="minPrice" min="0" max="500" value="0" step="1">
+                        <input type="range" class="range-slider" id="maxPrice" min="0" max="500" value="200" step="1">
+                        <div class="range-track">
+                            <div class="range-fill" id="rangeFill"></div>
+                        </div>
+                    </div>
+                    <div class="range-labels">
+                        <span>0 €</span>
+                        <span>500 €</span>
+                    </div>
+                </div>
+
+                <button class="analyze-btn" id="analyzeBtn">
+                    <svg class="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    <span class="btn-text">Analyser le marché</span>
+                    <div class="btn-shimmer"></div>
+                </button>
+            </div>
+
+            <div class="results-panel glass-panel">
+                <div class="panel-header">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                    <span>Résultats d'analyse</span>
+                    <div class="panel-actions">
+                        <span class="badge" id="resultCount"></span>
+                        <button class="clear-btn" id="clearBtn" title="Réinitialiser">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="summary-cards" id="summaryCards">
+                    <div class="summary-card glass-card">
+                        <div class="sc-icon-wrap scan"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
+                        <div class="sc-body">
+                            <div class="sc-value" id="scanCount"><span class="counter">0</span></div>
+                            <div class="sc-label">Articles scannés</div>
+                        </div>
+                    </div>
+                    <div class="summary-card glass-card">
+                        <div class="sc-icon-wrap opps"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+                        <div class="sc-body">
+                            <div class="sc-value" id="oppCount"><span class="counter">0</span></div>
+                            <div class="sc-label">Opportunités</div>
+                        </div>
+                    </div>
+                    <div class="summary-card glass-card">
+                        <div class="sc-icon-wrap margin"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+                        <div class="sc-body">
+                            <div class="sc-value" id="avgMargin"><span class="counter">0</span>%</div>
+                            <div class="sc-label">Marge moyenne</div>
+                        </div>
+                    </div>
+                    <div class="summary-card glass-card">
+                        <div class="sc-icon-wrap profit"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+                        <div class="sc-body">
+                            <div class="sc-value" id="avgProfit"><span class="counter">0</span> €</div>
+                            <div class="sc-label">Profit moyen</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="loadingState" class="loading-state hidden">
+                    <div class="loading-spinner-ring">
+                        <div></div><div></div><div></div><div></div>
+                    </div>
+                    <p class="loading-text">Analyse du marché en cours</p>
+                    <div class="loading-bar"><div class="loading-fill"></div></div>
+                    <div class="loading-phases">
+                        <span class="phase active" data-phase="0">Scan Vinted</span>
+                        <span class="phase" data-phase="1">Analyse prix</span>
+                        <span class="phase" data-phase="2">Calcul marges</span>
+                    </div>
+                </div>
+
+                <div id="emptyState" class="empty-state">
+                    <div class="empty-graphic">
+                        <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+                            <circle cx="40" cy="40" r="38" stroke="rgba(108,92,231,0.2)" stroke-width="2" stroke-dasharray="4 4"/>
+                            <circle cx="40" cy="40" r="28" stroke="rgba(108,92,231,0.3)" stroke-width="1.5" stroke-dasharray="3 6"/>
+                            <path d="M30 45l6 6 14-14" stroke="url(#lg2)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                            <circle cx="40" cy="40" r="8" fill="none" stroke="url(#lg1)" stroke-width="2">
+                                <animateTransform attributeName="transform" type="rotate" from="0 40 40" to="360 40 40" dur="4s" repeatCount="indefinite"/>
+                            </circle>
+                        </svg>
+                    </div>
+                    <h3 class="empty-title">Prêt à analyser</h3>
+                    <p class="empty-desc">Configure tes filtres et lance l'analyse pour découvrir les meilleures opportunités de revente sur Vinted</p>
+                </div>
+
+                <div id="resultsList" class="results-list hidden"></div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <span>VintedPro SaaS &mdash; Analyse de marché intelligente</span>
+        <span class="footer-sep">•</span>
+        <span>Propulsé par l'API Vinted</span>
+    </footer>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
