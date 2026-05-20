@@ -1,36 +1,5 @@
 const API_BASE = typeof API_URL !== 'undefined' ? API_URL : 'http://localhost:8001';
 
-const ACCESS_CODE = 'patate';
-
-(function initAccess() {
-    const gate = document.getElementById('accessGate');
-    const input = document.getElementById('accessCode');
-    const btn = document.getElementById('accessBtn');
-    const err = document.getElementById('accessError');
-
-    if (!gate) return;
-
-    function tryAccess() {
-        if (input.value.toLowerCase() === ACCESS_CODE) {
-            gate.classList.add('hidden');
-            setTimeout(() => gate.style.display = 'none', 500);
-            err.textContent = '';
-        } else {
-            err.textContent = 'Code incorrect';
-            input.value = '';
-            input.focus();
-            input.style.borderColor = 'var(--red)';
-            setTimeout(() => input.style.borderColor = '', 800);
-        }
-    }
-
-    input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') tryAccess();
-    });
-    btn.addEventListener('click', tryAccess);
-    input.focus();
-})();
-
 let credits = 0;
 let isAnalyzing = false;
 
