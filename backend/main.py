@@ -17,14 +17,32 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-VINTED_SEARCH = "https://www.vinted.fr/api/v2/catalog/items"
+VINTED_BASE = "https://www.vinted.fr"
+VINTED_SEARCH = f"{VINTED_BASE}/api/v2/catalog/items"
+
+USER_AGENTS = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+]
+
 SESSION = requests.Session()
 SESSION.headers.update({
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Accept-Language': 'fr-FR,fr;q=0.9',
+    'User-Agent': USER_AGENTS[0],
+    'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.5',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'DNT': '1',
+    'Connection': 'keep-alive',
+    'Upgrade-Insecure-Requests': '1',
+    'Sec-Fetch-Dest': 'document',
+    'Sec-Fetch-Mode': 'navigate',
+    'Sec-Fetch-Site': 'none',
+    'Sec-Fetch-User': '?1',
 })
 
 _session_ok = False
+_cookie_jar = None
 
 NOISE_WORDS = [
     'neuf', 'neuve', 'jamais porté', 'jamais porte', 'étiquette', 'etiquette',
@@ -45,14 +63,29 @@ CATEGORIES = {
     "enfants": ["bebe", "enfant", "toddler", "kids"],
 }
 
+def init_session():
+    global _session_ok, _cookie_jar
+    for ua in USER_AGENTS:
+        try:
+            sess = requests.Session()
+            sess.headers.update(SESSION.headers)
+            sess.headers['User-Agent'] = ua
+            sess.get(VINTED_BASE, timeout=20)
+            sess.get(f"{VINTED_BASE}/api/v2/items?page=1&per_page=1", 
+                headers={'Accept': 'application/json, text/plain, */*', 'Referer': f'{VINTED_BASE}/'},
+                timeout=15)
+            SESSION.cookies.update(sess.cookies)
+            SESSION.headers['User-Agent'] = ua
+            _session_ok = True
+            return True
+        except:
+            continue
+    _session_ok = False
+    return False
+
 @app.on_event("startup")
 async def startup():
-    global _session_ok
-    try:
-        SESSION.get('https://www.vinted.fr/', timeout=15)
-        _session_ok = True
-    except:
-        _session_ok = False
+    init_session()
 
 def clean_title(title: str) -> str:
     t = title.lower()
@@ -66,19 +99,32 @@ def clean_title(title: str) -> str:
 
 def search_vinted(search_text: str, page: int = 1, per_page: int = 30) -> Optional[dict]:
     params = {'search_text': search_text, 'page': page, 'per_page': per_page}
-    for attempt in range(2):
+    for attempt in range(3):
         try:
+            ua = USER_AGENTS[(attempt + page) % len(USER_AGENTS)]
             resp = SESSION.get(VINTED_SEARCH, params=params,
-                headers={'Accept': 'application/json, text/plain, */*'},
-                timeout=15)
+                headers={
+                    'Accept': 'application/json, text/plain, */*',
+                    'Referer': f'{VINTED_BASE}/catalog?search_text={search_text}',
+                    'User-Agent': ua,
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                timeout=20)
             if resp.status_code == 200:
                 return resp.json()
-            if resp.status_code in (401, 403):
-                time.sleep(1)
+            if resp.status_code in (401, 403, 429):
+                time.sleep(1.5 * (attempt + 1))
+                if attempt == 0:
+                    init_session()
                 continue
             return None
+        except requests.exceptions.Timeout:
+            time.sleep(2)
+            continue
         except:
             time.sleep(1)
+            if attempt == 0:
+                init_session()
     return None
 
 def fetch_items(search_text: str, max_pages: int = 3) -> list:
