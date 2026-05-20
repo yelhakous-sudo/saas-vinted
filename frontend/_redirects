@@ -1,2 +1,2 @@
 # Cloudflare Pages redirects
-/api/* https://ton-backend.railway.app/api/:splat 200
+/api/* https://vintedpro-backend.onrender.com/api/:splat 200
