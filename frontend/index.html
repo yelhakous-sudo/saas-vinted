@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>VintedPro SaaS - Analyseur de Marge Intelligent</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -122,9 +122,49 @@
                     </label>
                     <div class="input-wrapper">
                         <input type="text" class="styled-input" id="brandInput" value="Nike,Adidas,Saucony,New Balance" spellcheck="false">
-                        <div class="input-suffix">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        Modèle
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="text" class="styled-input" id="modelInput" placeholder="Ex: Air Force 1, Stan Smith..." spellcheck="false">
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        Taille
+                    </label>
+                    <div class="tag-container" id="sizeTags">
+                        <button class="tag-btn" data-value="xs">XS</button>
+                        <button class="tag-btn" data-value="s">S</button>
+                        <button class="tag-btn active" data-value="m">M</button>
+                        <button class="tag-btn" data-value="l">L</button>
+                        <button class="tag-btn" data-value="xl">XL</button>
+                        <button class="tag-btn" data-value="xxl">XXL</button>
+                        <button class="tag-btn" data-value="36">36</button>
+                        <button class="tag-btn" data-value="38">38</button>
+                        <button class="tag-btn" data-value="40">40</button>
+                        <button class="tag-btn" data-value="42">42</button>
+                        <button class="tag-btn" data-value="44">44</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        Qualité
+                    </label>
+                    <div class="tag-container" id="conditionTags">
+                        <button class="tag-btn active" data-value="neuf">Neuf</button>
+                        <button class="tag-btn active" data-value="très bon état">Très bon état</button>
+                        <button class="tag-btn active" data-value="bon état">Bon état</button>
+                        <button class="tag-btn" data-value="satisfaisant">Satisfaisant</button>
                     </div>
                 </div>
 
@@ -133,20 +173,24 @@
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                         Fourchette de prix
                     </label>
-                    <div class="range-header">
-                        <span class="range-values" id="priceRangeLabel">0 € — 200 €</span>
-                    </div>
-                    <div class="range-container">
-                        <input type="range" class="range-slider" id="minPrice" min="0" max="500" value="0" step="1">
-                        <input type="range" class="range-slider" id="maxPrice" min="0" max="500" value="200" step="1">
-                        <div class="range-track">
-                            <div class="range-fill" id="rangeFill"></div>
+                    <div class="price-gauge" id="priceGauge">
+                        <div class="gauge-bar">
+                            <div class="gauge-segment seg-cheap"></div>
+                            <div class="gauge-segment seg-mid"></div>
+                            <div class="gauge-segment seg-expensive"></div>
+                            <div class="gauge-fill" id="gaugeFill"></div>
                         </div>
+                        <div class="gauge-handle gauge-handle-min" id="gaugeHandleMin"></div>
+                        <div class="gauge-handle gauge-handle-max" id="gaugeHandleMax"></div>
                     </div>
-                    <div class="range-labels">
-                        <span>0 €</span>
-                        <span>500 €</span>
+                    <div class="gauge-labels">
+                        <span class="gauge-label gauge-label-cheap">0 €</span>
+                        <span class="gauge-label gauge-label-mid">250 €</span>
+                        <span class="gauge-label gauge-label-expensive">500 €</span>
                     </div>
+                    <div class="range-values" id="priceRangeLabel">0 € — 200 €</div>
+                    <input type="range" class="hidden-range" id="minPrice" min="0" max="500" value="0" step="1">
+                    <input type="range" class="hidden-range" id="maxPrice" min="0" max="500" value="200" step="1">
                 </div>
 
                 <button class="analyze-btn" id="analyzeBtn">

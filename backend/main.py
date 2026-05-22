@@ -180,13 +180,16 @@ def search(q: str = Query(..., min_length=1), page: int = Query(1, ge=1), per_pa
 def analyze(category: str = Query("tops"), subcategory: str = Query(""),
     brands: str = Query("Nike,Adidas,Saucony,New Balance"), min_price: float = Query(0, ge=0),
     max_price: float = Query(500, ge=0), pages: int = Query(3, ge=1, le=10),
-    sort_by: str = Query("profit")):
+    sort_by: str = Query("profit"), model: str = Query(""),
+    sizes: str = Query(""), conditions: str = Query("")):
     brand_list = [b.strip() for b in brands.split(',') if b.strip()]
     sub_list = [subcategory] if subcategory else CATEGORIES.get(category, [category])
     all_items = []
     for brand in brand_list:
         for sub in sub_list:
             search_q = f"{brand} {sub}"
+            if model:
+                search_q = f"{brand} {model}"
             items = fetch_items(search_q, pages)
             for it in items:
                 info = extract_item(it)
@@ -195,6 +198,17 @@ def analyze(category: str = Query("tops"), subcategory: str = Query(""),
     if not all_items:
         raise HTTPException(404, "Aucun article trouvé")
     all_items = [i for i in all_items if min_price <= i['price'] <= max_price]
+    if model:
+        model_lower = model.lower()
+        all_items = [i for i in all_items if model_lower in i['title'].lower()]
+    if sizes:
+        size_list = [s.strip().lower() for s in sizes.split(',') if s.strip()]
+        if size_list:
+            all_items = [i for i in all_items if i['size'] and any(sz in i['size'].lower() for sz in size_list)]
+    if conditions:
+        cond_list = [c.strip().lower() for c in conditions.split(',') if c.strip()]
+        if cond_list:
+            all_items = [i for i in all_items if i['condition'] and any(c in i['condition'].lower() for c in cond_list)]
     if not all_items:
         raise HTTPException(404, "Aucun article dans cette fourchette de prix")
     groups = defaultdict(list)
