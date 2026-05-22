@@ -173,24 +173,25 @@
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                         Fourchette de prix
                     </label>
-                    <div class="range-gauge" id="priceGauge">
-                        <div class="range-track-bg">
-                            <div class="track-segment seg-cheap"></div>
-                            <div class="track-segment seg-mid"></div>
-                            <div class="track-segment seg-expensive"></div>
-                            <div class="range-fill" id="rangeFill"></div>
+                    <div class="range-wrap">
+                        <div class="range-values-row">
+                            <span class="range-min-label" id="priceMinLabel">0 €</span>
+                            <span class="range-sep">—</span>
+                            <span class="range-max-label" id="priceMaxLabel">200 €</span>
                         </div>
-                        <div class="range-labels-top">
-                            <span class="range-value-label" id="priceMinLabel">0 €</span>
-                            <span class="range-value-label" id="priceMaxLabel">200 €</span>
+                        <div class="range-track-wrap">
+                            <div class="range-seg seg-low"></div>
+                            <div class="range-seg seg-mid"></div>
+                            <div class="range-seg seg-high"></div>
+                            <div class="range-track-fill" id="rangeFill"></div>
+                            <input type="range" class="rg rg-min" id="minPrice" min="0" max="500" value="0" step="1">
+                            <input type="range" class="rg rg-max" id="maxPrice" min="0" max="500" value="200" step="1">
                         </div>
-                        <input type="range" class="range-slider" id="minPrice" min="0" max="500" value="0" step="1">
-                        <input type="range" class="range-slider" id="maxPrice" min="0" max="500" value="200" step="1">
-                    </div>
-                    <div class="range-labels-bottom">
-                        <span>0 €</span>
-                        <span>250 €</span>
-                        <span>500 €</span>
+                        <div class="range-labels">
+                            <span>0 €</span>
+                            <span>250 €</span>
+                            <span>500 €</span>
+                        </div>
                     </div>
                 </div>
 
