@@ -25,80 +25,10 @@ const toastContainer = $('#toastContainer');
 const statsScanned = $('#statsScanned');
 const statsDeals = $('#statsDeals');
 const statsMargin = $('#statsMargin');
-const priceLabel = $('#priceRangeLabel');
+const priceMinLabel = $('#priceMinLabel');
+const priceMaxLabel = $('#priceMaxLabel');
 
 const subcategories = {};
-
-// ─── Gauge State ───
-let minVal = 0, maxVal = 200;
-const MIN = 0, MAX = 500;
-let dragging = null;
-
-function initGauge() {
-    const gauge = $('#priceGauge');
-    const fill = $('#gaugeFill');
-    const hMin = $('#gaugeHandleMin');
-    const hMax = $('#gaugeHandleMax');
-
-    function posFromVal(v) { return ((v - MIN) / (MAX - MIN)) * 100; }
-
-    function updateGauge() {
-        const pmin = posFromVal(minVal);
-        const pmax = posFromVal(maxVal);
-        fill.style.left = pmin + '%';
-        fill.style.width = (pmax - pmin) + '%';
-        hMin.style.left = pmin + '%';
-        hMax.style.left = pmax + '%';
-        priceLabel.textContent = `${minVal} € — ${maxVal} €`;
-        $('#minPrice').value = minVal;
-        $('#maxPrice').value = maxVal;
-    }
-
-    function valFromPageX(pageX) {
-        const rect = gauge.getBoundingClientRect();
-        const x = Math.max(0, Math.min(pageX - rect.left, rect.width));
-        return Math.round((x / rect.width) * (MAX - MIN) + MIN);
-    }
-
-    function onStart(e) {
-        const t = e.target;
-        if (t.id === 'gaugeHandleMin') { dragging = 'min'; return; }
-        if (t.id === 'gaugeHandleMax') { dragging = 'max'; return; }
-        const v = valFromPageX(e.clientX || (e.touches && e.touches[0].clientX));
-        const dmin = Math.abs(v - minVal);
-        const dmax = Math.abs(v - maxVal);
-        dragging = dmin < dmax ? 'min' : 'max';
-        if (dragging === 'min') minVal = v; else maxVal = v;
-        if (minVal >= maxVal) {
-            if (dragging === 'min') minVal = Math.max(maxVal - 1, MIN);
-            else maxVal = Math.min(minVal + 1, MAX);
-        }
-        updateGauge();
-    }
-
-    function onMove(e) {
-        if (!dragging) return;
-        e.preventDefault();
-        const v = valFromPageX(e.clientX || (e.touches && e.touches[0].clientX));
-        if (dragging === 'min') {
-            minVal = Math.min(v, maxVal - 1);
-        } else {
-            maxVal = Math.max(v, minVal + 1);
-        }
-        updateGauge();
-    }
-
-    function onEnd() { dragging = null; }
-
-    gauge.addEventListener('mousedown', onStart);
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onEnd);
-    gauge.addEventListener('touchstart', onStart, { passive: true });
-    document.addEventListener('touchmove', onMove, { passive: false });
-    document.addEventListener('touchend', onEnd);
-
-    updateGauge();
-}
 
 // ─── Tags ───
 function initTags() {
@@ -257,6 +187,28 @@ function updateSubcategories(category) {
         subSelect.appendChild(opt);
     });
 }
+
+// ─── Price Range ───
+let minVal = 0, maxVal = 200;
+
+function updateRange() {
+    let vmin = parseFloat(minPrice.value);
+    let vmax = parseFloat(maxPrice.value);
+    if (vmin >= vmax) {
+        if (document.activeElement === minPrice) { vmax = Math.min(vmin + 1, 500); maxPrice.value = vmax; }
+        else { vmin = Math.max(vmax - 1, 0); minPrice.value = vmin; }
+    }
+    minVal = vmin; maxVal = vmax;
+    const pctMin = (vmin / 500) * 100;
+    const pctMax = (vmax / 500) * 100;
+    rangeFill.style.left = pctMin + '%';
+    rangeFill.style.width = (pctMax - pctMin) + '%';
+    priceMinLabel.textContent = `${vmin} €`;
+    priceMaxLabel.textContent = `${vmax} €`;
+}
+
+minPrice.addEventListener('input', updateRange);
+maxPrice.addEventListener('input', updateRange);
 
 // ─── Clear ───
 clearBtn.addEventListener('click', () => {
@@ -458,6 +410,6 @@ function esc(s) {
 // ─── Init ───
 initBackground();
 initCategories();
-initGauge();
+updateRange();
 initTags();
 updateSubcategories('chaussures');
