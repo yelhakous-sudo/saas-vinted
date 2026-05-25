@@ -1,11 +1,13 @@
 const API_BASE = typeof API_URL !== 'undefined' ? API_URL : 'http://localhost:8001';
-
-let credits = 0;
+let token = localStorage.getItem('vintedpro_token');
+let user = JSON.parse(localStorage.getItem('vintedpro_user') || 'null');
 let isAnalyzing = false;
+let catChart = null, historyChart = null;
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => document.querySelectorAll(s);
 
+// UI refs
 const categoryGrid = $('#categoryGrid');
 const subSelect = $('#subcategorySelect');
 const brandInput = $('#brandInput');
@@ -27,8 +29,118 @@ const statsDeals = $('#statsDeals');
 const statsMargin = $('#statsMargin');
 const priceMinLabel = $('#priceMinLabel');
 const priceMaxLabel = $('#priceMaxLabel');
+const authBtn = $('#authBtn');
+const authModal = $('#authModal');
+const authModalClose = $('#authModalClose');
+const authModalTitle = $('#authModalTitle');
+const dashboardBtn = $('#dashboardBtn');
+const dashboardModal = $('#dashboardModal');
+const dashboardModalClose = $('#dashboardModalClose');
+const navCredits = $('#navCredits');
 
 const subcategories = {};
+
+// ─── Auth state ───
+function authHeaders() {
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
+}
+
+function updateAuthUI() {
+    if (user) {
+        authBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg><span style="font-size:11px;font-weight:500">${user.username}</span>`;
+        authBtn.onclick = logout;
+        navCredits.style.display = 'flex';
+        dashboardBtn.style.display = 'flex';
+        dashboardBtn.onclick = () => openDashboard();
+        creditsDisplay.textContent = user.credits;
+    } else {
+        authBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>`;
+        authBtn.onclick = () => openAuth();
+        navCredits.style.display = 'none';
+        dashboardBtn.style.display = 'none';
+    }
+}
+
+function logout() {
+    token = null;
+    user = null;
+    localStorage.removeItem('vintedpro_token');
+    localStorage.removeItem('vintedpro_user');
+    updateAuthUI();
+    showToast('Deconnecte');
+}
+
+async function openAuth() {
+    authModal.classList.remove('hidden');
+    authModalTitle.textContent = 'Authentification';
+    showAuthTab('login');
+}
+
+function showAuthTab(tab) {
+    $$('.auth-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+    $('#loginForm').classList.toggle('hidden', tab !== 'login');
+    $('#registerForm').classList.toggle('hidden', tab !== 'register');
+    $('#authError').textContent = '';
+    $('#authSuccess').textContent = '';
+}
+
+$$('.auth-tab').forEach(tab => {
+    tab.addEventListener('click', () => showAuthTab(tab.dataset.tab));
+});
+
+authModalClose.onclick = () => authModal.classList.add('hidden');
+authModal.addEventListener('click', (e) => { if (e.target === authModal) authModal.classList.add('hidden'); });
+dashboardModalClose.onclick = () => dashboardModal.classList.add('hidden');
+dashboardModal.addEventListener('click', (e) => { if (e.target === dashboardModal) dashboardModal.classList.add('hidden'); });
+
+$('#loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = $('#loginEmail').value;
+    const password = $('#loginPassword').value;
+    $('#authError').textContent = '';
+    try {
+        const resp = await fetch(`${API_BASE}/api/auth/login`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.detail || 'Erreur');
+        token = data.access_token;
+        user = data.user;
+        localStorage.setItem('vintedpro_token', token);
+        localStorage.setItem('vintedpro_user', JSON.stringify(user));
+        updateAuthUI();
+        authModal.classList.add('hidden');
+        showToast('Connecte !');
+    } catch (err) {
+        $('#authError').textContent = err.message;
+    }
+});
+
+$('#registerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = $('#registerEmail').value;
+    const username = $('#registerUsername').value;
+    const password = $('#registerPassword').value;
+    $('#authSuccess').textContent = '';
+    try {
+        const resp = await fetch(`${API_BASE}/api/auth/register`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, username, password })
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.detail || 'Erreur');
+        token = data.access_token;
+        user = data.user;
+        localStorage.setItem('vintedpro_token', token);
+        localStorage.setItem('vintedpro_user', JSON.stringify(user));
+        updateAuthUI();
+        authModal.classList.add('hidden');
+        showToast('Compte cree !');
+    } catch (err) {
+        $('#authError').textContent = err.message;
+    }
+});
 
 // ─── Tags ───
 function initTags() {
@@ -50,6 +162,7 @@ function getActiveTags(containerId) {
 // ─── Animated Background ───
 function initBackground() {
     const canvas = document.getElementById('bgCanvas');
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
     let w, h, particles = [];
     const COUNT = Math.min(60, Math.floor(window.innerWidth / 12));
@@ -190,6 +303,9 @@ function updateSubcategories(category) {
 
 // ─── Price Range ───
 let minVal = 0, maxVal = 200;
+const minPrice = $('#minPrice');
+const maxPrice = $('#maxPrice');
+const rangeFill = $('#rangeFill');
 
 function updateRange() {
     let vmin = parseFloat(minPrice.value);
@@ -262,7 +378,8 @@ async function doAnalyze() {
         if (sizes) params.set('sizes', sizes);
         if (conditions) params.set('conditions', conditions);
 
-        const resp = await fetch(`${API_BASE}/api/analyze?${params}`);
+        const headers = authHeaders();
+        const resp = await fetch(`${API_BASE}/api/analyze?${params}`, { headers });
 
         if (!resp.ok) {
             const err = await resp.json().catch(() => ({ detail: 'Erreur serveur' }));
@@ -270,9 +387,12 @@ async function doAnalyze() {
         }
 
         const data = await resp.json();
-        credits++;
-        creditsDisplay.textContent = credits;
-        showToast('Analyse terminée avec succès ✅');
+        if (user) {
+            user.credits = (user.credits || 0) + 1;
+            localStorage.setItem('vintedpro_user', JSON.stringify(user));
+            creditsDisplay.textContent = user.credits;
+        }
+        showToast('Analyse terminee avec succes');
 
         clearInterval(loadingPhaseInterval);
         renderResults(data);
@@ -293,7 +413,7 @@ async function doAnalyze() {
     } finally {
         isAnalyzing = false;
         analyzeBtn.disabled = false;
-        analyzeBtn.querySelector('.btn-text').textContent = 'Analyser le marché';
+        analyzeBtn.querySelector('.btn-text').textContent = 'Analyser le marche';
     }
 }
 
@@ -321,8 +441,8 @@ function renderResults(data) {
         resultsList.innerHTML = `
             <div class="empty-state" style="padding:32px">
                 <div class="empty-graphic">🔍</div>
-                <h3 class="empty-title">Aucune opportunité</h3>
-                <p class="empty-desc">Élargis ta recherche ou change de catégorie</p>
+                <h3 class="empty-title">Aucune opportunite</h3>
+                <p class="empty-desc">Elargis ta recherche ou change de categorie</p>
             </div>`;
         return;
     }
@@ -382,7 +502,7 @@ function renderOpportunityCard(o, idx) {
                 <div class="opp-meta">${sizeTag}${condTag}</div>
                 <div class="opp-prices">
                     <span class="opp-buy">Achat: ${o.price} €</span>
-                    <span class="opp-sep">→</span>
+                    <span class="opp-sep">&rarr;</span>
                     <span class="opp-sell">Revente: ${o.resale_estimation} €</span>
                 </div>
                 <div class="opp-profit">
@@ -407,9 +527,101 @@ function esc(s) {
     return d.innerHTML;
 }
 
+// ─── Dashboard ───
+async function openDashboard() {
+    dashboardModal.classList.remove('hidden');
+    try {
+        const resp = await fetch(`${API_BASE}/api/stats`, { headers: authHeaders() });
+        if (!resp.ok) throw new Error('Erreur chargement stats');
+        const stats = await resp.json();
+        renderDashboard(stats);
+    } catch (err) {
+        showToast('Erreur chargement dashboard', 'error');
+    }
+}
+
+function renderDashboard(stats) {
+    $('#dashScans').textContent = stats.total_scans;
+    $('#dashOpps').textContent = stats.total_opportunities;
+    $('#dashMargin').textContent = stats.avg_margin_all + '%';
+    $('#dashProfit').textContent = stats.avg_profit_all + '€';
+
+    // Category chart
+    const catCtx = document.getElementById('catChart').getContext('2d');
+    if (catChart) catChart.destroy();
+    catChart = new Chart(catCtx, {
+        type: 'doughnut',
+        data: {
+            labels: stats.top_categories.map(c => c.category),
+            datasets: [{
+                data: stats.top_categories.map(c => c.count),
+                backgroundColor: ['#6C5CE7', '#A29BFE', '#fd79a8', '#00c853', '#ffab00'],
+                borderWidth: 0,
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom', labels: { color: '#8888a8', font: { size: 11 } } } }
+        }
+    });
+
+    // History chart
+    const histCtx = document.getElementById('historyChart').getContext('2d');
+    if (historyChart) historyChart.destroy();
+    const history = stats.scan_history.slice().reverse();
+    historyChart = new Chart(histCtx, {
+        type: 'line',
+        data: {
+            labels: history.map((s, i) => `#${i+1}`),
+            datasets: [
+                {
+                    label: 'Opportunites',
+                    data: history.map(s => s.opportunities_found),
+                    borderColor: '#6C5CE7', backgroundColor: 'rgba(108,92,231,0.1)',
+                    fill: true, tension: 0.4,
+                },
+                {
+                    label: 'Marge %',
+                    data: history.map(s => s.avg_margin),
+                    borderColor: '#00c853', backgroundColor: 'rgba(0,200,83,0.1)',
+                    fill: true, tension: 0.4, yAxisID: 'y1',
+                }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8888a8' } },
+                y1: { position: 'right', beginAtZero: true, grid: { display: false }, ticks: { color: '#8888a8' } },
+                x: { grid: { display: false }, ticks: { color: '#8888a8' } }
+            },
+            plugins: { legend: { labels: { color: '#8888a8', font: { size: 11 } } } }
+        }
+    });
+
+    // History list
+    const list = $('#dashHistoryList');
+    if (stats.scan_history.length === 0) {
+        list.innerHTML = '<p style="color:var(--text2);font-size:12px;text-align:center;padding:16px">Aucune analyse pour le moment</p>';
+        return;
+    }
+    list.innerHTML = stats.scan_history.slice(0, 10).map(s => `
+        <div class="dash-history-item">
+            <div class="dash-hi-cat">${esc(s.category)}</div>
+            <div class="dash-hi-brands">${esc(s.brands)}</div>
+            <div class="dash-hi-stats">
+                <span>${s.total_items} items</span>
+                <span>${s.opportunities_found} opps</span>
+                <span>${s.avg_margin}% marge</span>
+            </div>
+        </div>
+    `).join('');
+}
+
 // ─── Init ───
 initBackground();
 initCategories();
 updateRange();
 initTags();
 updateSubcategories('chaussures');
+updateAuthUI();

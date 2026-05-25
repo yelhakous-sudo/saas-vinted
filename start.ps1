@@ -6,9 +6,9 @@ Write-Host ""
 $processes = netstat -ano | Select-String ":${Port} " | ForEach-Object { $_ -split '\s+' | Select-Object -Last 1 } | Select-Object -Unique
 foreach ($pid in $processes) { if ($pid -and $pid -ne 0) { try { Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue } catch {} } }
 
-$backendDir = Join-Path $PSScriptRoot "backend"
+$saasDir = $PSScriptRoot
 Write-Host "[1/2] Démarrage du backend sur le port $Port..." -ForegroundColor Yellow
-$backend = Start-Process -NoNewWindow -FilePath "python" -ArgumentList "-m uvicorn main:app --host 0.0.0.0 --port $Port" -WorkingDirectory $backendDir -PassThru
+$backend = Start-Process -NoNewWindow -FilePath "python" -ArgumentList "-m uvicorn backend.main:app --host 0.0.0.0 --port $Port" -WorkingDirectory $saasDir -PassThru
 Start-Sleep -Seconds 4
 
 try {

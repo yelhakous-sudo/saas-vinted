@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  app:
+    build: .
+    ports:
+      - "8001:8001"
+    environment:
+      - JWT_SECRET=${JWT_SECRET:-change-this-in-production}
+      - VINTED_PROXIES=${VINTED_PROXIES:-}
+    volumes:
+      - ./backend/data:/app/backend/data
+    restart: unless-stopped

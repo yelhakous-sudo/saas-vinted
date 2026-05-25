@@ -42,10 +42,16 @@
                 <span class="live-dot"></span>
                 <span class="live-text">Live</span>
             </div>
-            <div class="stat-badge glass-badge">
+            <div class="stat-badge" id="navCredits" style="display:none">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
-                <span id="creditsDisplay">0</span> analyses
+                <span id="creditsDisplay">0</span>
             </div>
+            <button class="nav-btn" id="dashboardBtn" style="display:none" title="Dashboard">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            </button>
+            <button class="nav-btn" id="authBtn" title="Connexion">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>
+            </button>
         </div>
     </nav>
 
@@ -282,10 +288,89 @@
         <span>VintedPro SaaS &mdash; Analyse de marché intelligente</span>
         <span class="footer-sep">•</span>
         <span>Propulsé par l'API Vinted</span>
+        <span class="footer-sep">•</span>
+        <span>Yanis El Hakous</span>
     </footer>
 
     <div class="toast-container" id="toastContainer"></div>
 
+    <!-- Auth Modal -->
+    <div class="modal-overlay hidden" id="authModal">
+        <div class="modal glass-panel">
+            <div class="modal-header">
+                <h2 class="modal-title" id="authModalTitle">Connexion</h2>
+                <button class="modal-close" id="authModalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="auth-tabs">
+                    <button class="auth-tab active" data-tab="login">Connexion</button>
+                    <button class="auth-tab" data-tab="register">Inscription</button>
+                </div>
+                <form id="loginForm" class="auth-form">
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="styled-input" id="loginEmail" placeholder="ton@email.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Mot de passe</label>
+                        <input type="password" class="styled-input" id="loginPassword" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="auth-submit-btn">Se connecter</button>
+                    <p class="auth-error" id="authError"></p>
+                </form>
+                <form id="registerForm" class="auth-form hidden">
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="styled-input" id="registerEmail" placeholder="ton@email.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Nom d'utilisateur</label>
+                        <input type="text" class="styled-input" id="registerUsername" placeholder="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Mot de passe (min 6 car.)</label>
+                        <input type="password" class="styled-input" id="registerPassword" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="auth-submit-btn">Creer un compte</button>
+                    <p class="auth-success" id="authSuccess"></p>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Modal -->
+    <div class="modal-overlay hidden" id="dashboardModal">
+        <div class="modal glass-panel modal-lg">
+            <div class="modal-header">
+                <h2 class="modal-title">Mon Dashboard</h2>
+                <button class="modal-close" id="dashboardModalClose">&times;</button>
+            </div>
+            <div class="modal-body dashboard-body">
+                <div class="dash-stats-row">
+                    <div class="dash-stat-card"><span class="dash-stat-value" id="dashScans">0</span><span class="dash-stat-label">Analyses</span></div>
+                    <div class="dash-stat-card"><span class="dash-stat-value" id="dashOpps">0</span><span class="dash-stat-label">Opportunites</span></div>
+                    <div class="dash-stat-card"><span class="dash-stat-value" id="dashMargin">0%</span><span class="dash-stat-label">Marge moy.</span></div>
+                    <div class="dash-stat-card"><span class="dash-stat-value" id="dashProfit">0€</span><span class="dash-stat-label">Profit moy.</span></div>
+                </div>
+                <div class="dash-charts">
+                    <div class="dash-chart-container">
+                        <h3 class="dash-chart-title">Categories analysees</h3>
+                        <canvas id="catChart"></canvas>
+                    </div>
+                    <div class="dash-chart-container">
+                        <h3 class="dash-chart-title">Historique des analyses</h3>
+                        <canvas id="historyChart"></canvas>
+                    </div>
+                </div>
+                <div class="dash-history">
+                    <h3 class="dash-chart-title">Dernieres analyses</h3>
+                    <div id="dashHistoryList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
